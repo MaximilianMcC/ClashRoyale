@@ -15,6 +15,11 @@ class Program
 
 		Knight.Load();
 
+		Knight knight = new Knight(Team.Blue);
+		knight.Spawn(new Vector2(0, 0));
+		Knight knight2 = new Knight(Team.Red);
+		knight2.Spawn(new Vector2(100, 100));
+
 		Emote laughingKing = new Emote("./assets/emotes/laughing-king.png", "./assets/emotes/laughing-king.wav", 355);
 
 		AssetManager.Textures["debug"] = AssetManager.LoadTexture("./assets/debug.png");

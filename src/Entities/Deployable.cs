@@ -3,7 +3,10 @@ using Raylib_cs;
 
 abstract class Deployable
 {
+	public abstract int MaxHealth { get; }
+	public int Health { get; set; }
 	public Team Team { get; }
+	public virtual float Speed { get; set; }
 	public Rectangle Hitbox;
 	
 	public Vector2 Position
@@ -37,6 +40,36 @@ abstract class Deployable
 	protected void RenderHitbox()
 	{
 		Raylib.DrawRectangleLinesEx(Hitbox, 2f, Color.Magenta);
+	}
+
+	// TODO: Greedy path finding
+	public void MoveTowards(Deployable target)
+	{
+		// Get the direction we need to move in
+		// TODO: Clamp it to like angles of 45deg or something
+		Vector2 direction = target.Position - Position;
+
+		// If we're pretty much there then stop otherwise
+		// we'll get a floating point error and go in some
+		// random as direction (not good (gone walkabouts))
+		if (direction.LengthSquared() <= 0.1f)
+		{
+			Position = target.Position;
+			return;
+		}
+
+		// Move in that direction
+		// TODO: Collision
+		direction = Vector2.Normalize(direction);
+		Position += (direction * Speed) * Raylib.GetFrameTime();
+	}
+
+	public Deployable GetClosestEnemy()
+	{
+		return Arena.Cards
+			.Where(card => card.Team != Team)
+			.OrderBy(card => Vector2.Distance(card.Position, Position))
+			.FirstOrDefault();
 	}
 }
 

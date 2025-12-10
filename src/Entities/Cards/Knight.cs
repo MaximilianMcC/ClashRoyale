@@ -1,13 +1,14 @@
 using System.Numerics;
 using Raylib_cs;
 
-class Knight : Troop
+class Knight : InfantryTroop
 {
 	public Knight(Team team) : base(team) { }
 
 	public override int MaxHealth => 960;
 	public override int Damage => 80;
-
+	public override float Speed => 40f;
+	
 	private static Texture2D sprite;
 
 	// TODO: Don't make static
@@ -22,6 +23,12 @@ class Knight : Troop
 		Raylib.UnloadTexture(sprite);
 	}
 
+	public override void Update()
+	{
+		// Move towards the closest enemy
+		MoveTowards(GetClosestEnemy());
+	}
+
 	public override void Render()
 	{
 		Raylib.DrawTexturePro(
@@ -32,5 +39,6 @@ class Knight : Troop
 			0f,
 			Color.White
 		);
+		RenderHitbox();
 	}
 }
