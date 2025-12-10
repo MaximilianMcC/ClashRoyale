@@ -16,6 +16,9 @@ abstract class Deployable
 	{
 		// Set the team
 		Team = team;
+
+		// Set the default hitbox size
+		Hitbox.Size = new Vector2(40, 60);
 	}
 
 	public virtual void Spawn(Vector2 position)
@@ -25,13 +28,16 @@ abstract class Deployable
 
 		// Add it to the map
 		Arena.Cards.Add(this);
-
-		Console.WriteLine($"spawned a {Team} one");
 	}
 
 	public virtual void Update() { }
 	public virtual void Render() { }
 	public virtual void CleanUp() { }
+
+	protected void RenderHitbox()
+	{
+		Raylib.DrawRectangleLinesEx(Hitbox, 2f, Color.Magenta);
+	}
 }
 
 enum Team

@@ -13,6 +13,8 @@ class Program
 		Raylib.InitWindow(540, 960, "clash ro" + (Networker.Hosting ? " (host)" : ""));
 		Raylib.InitAudioDevice();
 
+		Knight.Load();
+
 		Emote laughingKing = new Emote("./assets/emotes/laughing-king.png", "./assets/emotes/laughing-king.wav", 355);
 
 		AssetManager.Textures["debug"] = AssetManager.LoadTexture("./assets/debug.png");
@@ -40,6 +42,7 @@ class Program
 			Raylib.EndDrawing();
 		}
 
+		Knight.Unload();
 		AssetManager.UnloadEverything();
 		Raylib.CloseAudioDevice();
 		Raylib.CloseWindow();
