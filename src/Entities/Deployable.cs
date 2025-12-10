@@ -60,6 +60,8 @@ abstract class Deployable
 	// TODO: Greedy path finding
 	public void MoveTowards(Deployable target)
 	{
+		if (target == null) return;
+
 		// Get the direction we need to move in
 		// TODO: Clamp it to like angles of 45deg or something
 		Vector2 direction = target.Position - Position;
@@ -74,9 +76,27 @@ abstract class Deployable
 		}
 
 		// Move in that direction
-		// TODO: Collision
 		direction = Vector2.Normalize(direction);
-		Position += (direction * Speed) * Raylib.GetFrameTime();
+		Vector2 newPosition = Position + (direction * Speed) * Raylib.GetFrameTime();
+
+		// If there's no collision then move. Otherwise don't
+		if (Collision(newPosition) == false) Position = newPosition;
+	}
+
+	// TODO: 'refine'
+	private bool Collision(Vector2 newPosition)
+	{
+		Rectangle newHitbox = Hitbox;
+		newHitbox.Position = newPosition;
+
+		// Loop over everything on the arena
+		foreach (Deployable card in Arena.Cards)
+		{
+			if (card == this) continue;
+			if (Raylib.CheckCollisionRecs(card.Hitbox, newHitbox)) return true;
+		}
+
+		return false;
 	}
 
 	public Deployable GetClosestEnemy()
