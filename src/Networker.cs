@@ -9,7 +9,9 @@ class Networker
 	private static TcpListener server;
 	private static TcpClient client;
 	private static TcpClient otherClient;
+	private static List<string> unreadMessages = [];
 
+	public static bool UnreadMessages => unreadMessages.Count > 0;
 	public static TcpClient Recipient => Hosting ? otherClient : client;
 
 	public static async Task Network(string[] args)
@@ -75,15 +77,16 @@ class Networker
 			// Listen to everything sent
 			while ((bytesRead = await stream.ReadAsync(buffer)) != 0)
 			{
+				// Decode the data from the stream
 				string data = Encoding.UTF8.GetString(buffer, 0, bytesRead);
-				Console.WriteLine("received: " + data);
 
-				// TODO: Add to some kinda 'buffer' so u can call ReceiveData() or something
+				// Store the data so we can give it when queried
+				unreadMessages.Add(data);
 			}
 		}
 		catch (Exception e)
 		{
-			Console.WriteLine("client probably left idk\n" + e.Message);
+			Console.WriteLine("client probably left idk (please close the window)\n" + e.Message);
 		}
 		finally
 		{
@@ -92,7 +95,7 @@ class Networker
 		}
 	}
 
-	public static async Task SendData(string message)
+	public static async Task SendMessage(string message)
 	{
 		// If we're hosting then send data to the client,
 		// and if we're joining then send data to the server
@@ -108,5 +111,23 @@ class Networker
 			NetworkStream stream = recipient.GetStream();
 			await stream.WriteAsync(data);
 		}
+	}
+
+	// Get all messages
+	public static async Task<List<string>> GetMessages()
+	{
+		List<string> messages = unreadMessages;
+		unreadMessages.Clear();
+
+		return messages;
+	}
+
+	// Get just the least-recent/oldest message
+	public static async Task<string> GetMessage()
+	{
+		string message = unreadMessages.FirstOrDefault();
+		unreadMessages.Remove(message);
+
+		return message;
 	}
 }

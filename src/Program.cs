@@ -7,6 +7,7 @@ class Program
 		// Set up networking
 		await Networker.Network(args);
 
+		// Set up raylib
 		Raylib.SetTraceLogLevel(TraceLogLevel.Warning);
 		Raylib.InitWindow(540, 960, "clash ro" + (Networker.Hosting ? " (host)" : ""));
 
@@ -14,10 +15,8 @@ class Program
 
 		while (Raylib.WindowShouldClose() == false)
 		{
-			if (Raylib.IsKeyPressed(KeyboardKey.Space)) _ = Networker.SendData("hi from " + (Networker.Hosting ? "host" : "client"));
-
 			Raylib.BeginDrawing();
-			Raylib.ClearBackground(Networker.Hosting ? Color.Green : Color.Blue);
+			Raylib.ClearBackground(Color.Green);
 			Raylib.EndDrawing();
 		}
 
