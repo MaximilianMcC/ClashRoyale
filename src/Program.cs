@@ -16,6 +16,9 @@ class Program
 		Knight.Load();
 		Skeleton.Load();
 
+		Texture2D texture = AssetManager.LoadTexture("./assets/card-knight.png");
+		Card card = new Card(texture);
+
 		Emote laughingKing = new Emote("./assets/emotes/laughing-king.png", "./assets/emotes/laughing-king.wav", 355);
 
 		AssetManager.Textures["debug"] = AssetManager.LoadTexture("./assets/debug.png");
@@ -36,16 +39,21 @@ class Program
 				laughingKing.Play();
 			}
 
+			card.Update();
+
 			Raylib.BeginDrawing();
 			Raylib.ClearBackground(Color.Green);
 			Raylib.DrawText($"{Raylib.GetFPS()}", 10, 10, 30, Color.White);
 			Arena.Render();
 			laughingKing.Render();
+			card.Render();
 			Raylib.EndDrawing();
 		}
 
 		Knight.Unload();
 		Skeleton.Unload();
+
+		Raylib.UnloadTexture(texture);
 
 		AssetManager.UnloadEverything();
 		Raylib.CloseAudioDevice();

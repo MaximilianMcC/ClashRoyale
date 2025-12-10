@@ -86,6 +86,7 @@ abstract class Deployable
 	// TODO: 'refine'
 	private bool Collision(Vector2 newPosition)
 	{
+		// Adjust ourself
 		Rectangle newHitbox = Hitbox;
 		newHitbox.Position = newPosition;
 
