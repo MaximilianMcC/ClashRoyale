@@ -40,5 +40,6 @@ class Knight : InfantryTroop
 			Color.White
 		);
 		RenderHitbox();
+		RenderHealthBar();
 	}
 }

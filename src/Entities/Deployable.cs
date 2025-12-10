@@ -9,6 +9,8 @@ abstract class Deployable
 	public virtual float Speed { get; set; }
 	public Rectangle Hitbox;
 	
+	public Color TeamColor => Team == Team.Red ? Color.Red : Color.Blue;
+
 	public Vector2 Position
 	{
 		get => Hitbox.Position;
@@ -17,8 +19,8 @@ abstract class Deployable
 
 	public Deployable(Team team)
 	{
-		// Set the team
 		Team = team;
+		Health = MaxHealth;
 
 		// Set the default hitbox size
 		Hitbox.Size = new Vector2(40, 60);
@@ -40,6 +42,19 @@ abstract class Deployable
 	protected void RenderHitbox()
 	{
 		Raylib.DrawRectangleLinesEx(Hitbox, 2f, Color.Magenta);
+	}
+
+	// TODO: optional option to optionally draw the health number on it
+	protected void RenderHealthBar()
+	{
+		float width = Hitbox.Width;
+		float filledUpBar = (Health / MaxHealth) * width;
+		Rectangle bar = new Rectangle(Position, width, 10f);
+
+		// Draw the background and content
+		Raylib.DrawRectangleRec(bar, Color.Gray);
+		bar.Width = filledUpBar;
+		Raylib.DrawRectangleRec(bar, TeamColor);
 	}
 
 	// TODO: Greedy path finding
