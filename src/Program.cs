@@ -14,11 +14,7 @@ class Program
 		Raylib.InitAudioDevice();
 
 		Knight.Load();
-
-		Knight knight = new Knight(Team.Blue);
-		knight.Spawn(new Vector2(0, 0));
-		Knight knight2 = new Knight(Team.Red);
-		knight2.Spawn(new Vector2(100, 100));
+		Skeleton.Load();
 
 		Emote laughingKing = new Emote("./assets/emotes/laughing-king.png", "./assets/emotes/laughing-king.wav", 355);
 
@@ -42,12 +38,15 @@ class Program
 
 			Raylib.BeginDrawing();
 			Raylib.ClearBackground(Color.Green);
+			Raylib.DrawText($"{Raylib.GetFPS()}", 10, 10, 30, Color.White);
 			Arena.Render();
 			laughingKing.Render();
 			Raylib.EndDrawing();
 		}
 
 		Knight.Unload();
+		Skeleton.Unload();
+
 		AssetManager.UnloadEverything();
 		Raylib.CloseAudioDevice();
 		Raylib.CloseWindow();
