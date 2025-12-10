@@ -9,9 +9,11 @@ class Networker
 	private static TcpListener server;
 	private static TcpClient client;
 	private static TcpClient otherClient;
-	private static List<string> unreadMessages = [];
 
-	public static bool UnreadMessages => unreadMessages.Count > 0;
+	// private static List<string> unreadMessages = [];
+	private static string lastMessage = "AWAITING FIRST MESSAGE OR FLUSH";
+
+	// public static bool UnreadMessages => unreadMessages.Count > 0;
 	public static TcpClient Recipient => Hosting ? otherClient : client;
 
 	public static async Task Network(string[] args)
@@ -81,7 +83,8 @@ class Networker
 				string data = Encoding.UTF8.GetString(buffer, 0, bytesRead);
 
 				// Store the data so we can give it when queried
-				unreadMessages.Add(data);
+				// unreadMessages.Add(data);
+				lastMessage = data;
 			}
 		}
 		catch (Exception e)
@@ -114,20 +117,14 @@ class Networker
 	}
 
 	// Get all messages
-	public static async Task<List<string>> GetMessages()
+	public static async Task<string> GetLastMessage()
 	{
-		List<string> messages = unreadMessages;
-		unreadMessages.Clear();
-
-		return messages;
+		return lastMessage;
 	}
 
-	// Get just the least-recent/oldest message
-	public static async Task<string> GetMessage()
+	//? Run this every time you 'use' a message that you received
+	public static void FlushLastMessage()
 	{
-		string message = unreadMessages.FirstOrDefault();
-		unreadMessages.Remove(message);
-
-		return message;
+		lastMessage = "WAS JUST FLUSHED";
 	}
 }

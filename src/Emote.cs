@@ -39,9 +39,10 @@ class Emote
 		Raylib.DrawTexture(animation.GetFrame(), 0, 0, Color.White);
 	}
 
-	~Emote()
+	public void Unload()
 	{
 		animation.Unload();
 		Raylib.UnloadSound(sound);
 	}
+
 }

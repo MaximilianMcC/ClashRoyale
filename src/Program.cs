@@ -1,4 +1,5 @@
-﻿using Raylib_cs;
+﻿using System.Numerics;
+using Raylib_cs;
 
 class Program
 {
@@ -18,17 +19,18 @@ class Program
 
 		while (Raylib.WindowShouldClose() == false)
 		{
-			Arena.Update();
+			await Arena.Update();
 
-			if (await Networker.GetMessage() == "EMOTE")
+			if (await Networker.GetLastMessage() == "EMOTE")
 			{
 				laughingKing.Play();
+				Networker.FlushLastMessage();
 			}
 
 			if (Raylib.IsKeyPressed(KeyboardKey.Space))
 			{
-				laughingKing.Play();
 				await Networker.SendMessage("EMOTE");
+				laughingKing.Play();
 			}
 
 			Raylib.BeginDrawing();
