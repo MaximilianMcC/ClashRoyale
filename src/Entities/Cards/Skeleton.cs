@@ -5,6 +5,7 @@ class Skeleton : InfantryTroop
 {
 	public Skeleton(Team team) : base(team) { }
 
+	public override string Name => "Skeleton";
 	public override int MaxHealth => 20;
 	public override int Damage => 30;
 	public override float Speed => 60f;
@@ -41,5 +42,18 @@ class Skeleton : InfantryTroop
 		);
 		RenderHitbox();
 		RenderHealthBar();
+	}
+}
+
+class SkeletonCard : Card
+{
+	public SkeletonCard() : base(Raylib.LoadTexture("./assets/card-skarmy.png")) { }
+
+	public override async Task Spawn()
+	{
+		// Spawns three skeletons
+		await new Skeleton(Team.Blue).Spawn(CardPosition);
+		await new Skeleton(Team.Blue).Spawn(CardPosition);
+		await new Skeleton(Team.Blue).Spawn(CardPosition);
 	}
 }

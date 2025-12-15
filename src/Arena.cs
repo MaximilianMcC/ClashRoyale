@@ -30,7 +30,7 @@ static class Arena
 	{
 		// Check for if the other player is spawning something
 		string incomingMessage = await Networker.GetLastMessage();
-		if (incomingMessage.StartsWith("KNIGHT"))
+		if (incomingMessage.StartsWith("Knight"))
 		{
 			// Extract the properties
 			Team team = ParseTeam(incomingMessage.Split("|")[1]);

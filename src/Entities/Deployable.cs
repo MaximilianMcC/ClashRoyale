@@ -3,6 +3,7 @@ using Raylib_cs;
 
 abstract class Deployable
 {
+	public abstract string Name { get; }
 	public abstract int MaxHealth { get; }
 	public int Health { get; set; }
 	public Team Team { get; }
@@ -26,13 +27,17 @@ abstract class Deployable
 		Hitbox.Size = new Vector2(40, 60);
 	}
 
-	public virtual void Spawn(Vector2 position)
+	public virtual async Task Spawn(Vector2 spawnPoint)
 	{
 		// Set the position
-		Position = position;
+		Position = spawnPoint;
 
 		// Add it to the map
 		Arena.Cards.Add(this);
+
+		// Network it
+		await Networker.SendMessage($"{Name}|{Team}|{Position}");
+		Console.WriteLine("sent packet");
 	}
 
 	public virtual void Update() { }

@@ -5,6 +5,7 @@ class Knight : InfantryTroop
 {
 	public Knight(Team team) : base(team) { }
 
+	public override string Name => "Knight";
 	public override int MaxHealth => 960;
 	public override int Damage => 80;
 	public override float Speed => 40f;
@@ -41,5 +42,16 @@ class Knight : InfantryTroop
 		);
 		RenderHitbox();
 		RenderHealthBar();
+	}
+}
+
+class KnightCard : Card
+{
+	public KnightCard() : base(Raylib.LoadTexture("./assets/card-knight.png")) { }
+
+	public override async Task Spawn()
+	{
+		Knight knight = new Knight(Team.Blue);
+		await knight.Spawn(CardPosition);
 	}
 }

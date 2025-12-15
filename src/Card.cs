@@ -5,6 +5,7 @@ class Card
 {
 	private Texture2D texture;
 	private Rectangle hitbox;
+	protected Vector2 CardPosition => hitbox.Position;
 
 	private bool justDropped;
 	private bool previouslyDragging;
@@ -15,14 +16,14 @@ class Card
 		hitbox = new Rectangle(0, 0, 100, 130);
 	}
 
-	public void Update()
+	public async Task Update()
 	{
 		Drag();
 
 		if (justDropped)
 		{
 			// Spawn whatever we're spawning
-			Spawn();
+			await Spawn();
 
 			// 'Remove' the card
 			hitbox.Position = Vector2.Zero;
@@ -34,7 +35,7 @@ class Card
 	private void Drag()
 	{
 		justDropped = false;
-		bool draggingRn = Raylib.IsMouseButtonDown(MouseButton.Left) && Raylib.CheckCollisionPointRec(Raylib.GetMousePosition(), hitbox);
+		bool draggingRn = (Raylib.IsMouseButtonDown(MouseButton.Left) && (Raylib.CheckCollisionPointRec(Raylib.GetMousePosition(), hitbox) || previouslyDragging));
 
 		// If we're dragging then drag the thing yk
 		if (draggingRn)
@@ -63,11 +64,10 @@ class Card
 		);
 	}
 
-	public async virtual void Spawn()
-	{
-		Knight knight = new Knight(Team.Blue);
-		knight.Spawn(hitbox.Position);
+	public async virtual Task Spawn() { }
 
-		await Networker.SendMessage($"KNIGHT|{Team.Blue}|{Raylib.GetMousePosition()}");
+	public void CleanUp()
+	{
+		Raylib.UnloadTexture(texture);
 	}
 }

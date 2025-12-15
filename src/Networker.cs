@@ -1,130 +1,197 @@
+using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using Raylib_cs;
 
-class Networker
+public static class Networker
 {
-	public static bool Hosting { get; private set; }
-	private static TcpListener server;
-	private static TcpClient client;
-	private static TcpClient otherClient;
+	public static bool Host { get; private set; }
+	public static readonly ConcurrentQueue<string> IncomingPackets = [];
+	private static readonly ConcurrentQueue<string> outgoingPackets = [];
 
-	// private static List<string> unreadMessages = [];
-	private static string lastMessage = "AWAITING FIRST MESSAGE OR FLUSH";
-
-	// public static bool UnreadMessages => unreadMessages.Count > 0;
-	public static TcpClient Recipient => Hosting ? otherClient : client;
-
-	public static async Task Network(string[] args)
+	public static async Task Network(string ip, int port, bool host)
 	{
-		// Check for if we have enough args
-		if (args.Length != 3)
-		{
-			Console.WriteLine("probably incorrect args idk.\nClashRoyale.exe <IP> <PORT> <H|J>");
-			return;
-		}
+		// If we are the host, then start a server
+		Host = host;
+		if (Host) await Server.Init(port);
 
-		// Get the ip, port, and wether we're hosting/joining
-		string ip = args[0];
-		int port = int.Parse(args[1]);
-		Hosting = args[2] == "H";		
-
-		// if we're the host then make a game, and if we're
-		// the client then join the existing game
-		if (Hosting) await CreateGame(port);
-		else await JoinGame(ip, port);
-
-		// Wait for both clients and the server to be ready
-		Console.WriteLine("Waiting for everyone to ready up");
-		while (Recipient == null || Recipient.Connected == false) await Task.Delay(50);
-	}
-
-	private static async Task CreateGame(int port)
-	{
-		// Listen to any incoming data
-		server = new TcpListener(IPAddress.Any, port);
-		server.Start();
-
-		// Begin listening in a separate background thread
-		Console.WriteLine("Server listening on port " + port);
-		_ = Task.Run(async () =>
-		{
-			// Get a client
-			otherClient = await server.AcceptTcpClientAsync();
-			_ = HandleClient(otherClient);
-		});
-	}
-
-	private static async Task JoinGame(string ip, int port)
-	{
 		// Join the server
-		client = new TcpClient();
-		await client.ConnectAsync(ip, port);
-		Console.WriteLine("Joined server");
-
-		// Let ourself listen to incoming data from the server
-		_ = HandleClient(client);
+		await Client.ConnectToServerAsync(ip, port);
 	}
 
-	private static async Task HandleClient(TcpClient remoteClient)
+	public static class Server
 	{
-		// Get the stream of incoming data
-		NetworkStream stream = remoteClient.GetStream();
-		byte[] buffer = new byte[1024];
-		int bytesRead;
+		private static TcpListener server;
+		private static List<TcpClient> clients = [];
 
-		try
+		public static async Task Init(int port)
 		{
-			// Listen to everything sent
-			while ((bytesRead = await stream.ReadAsync(buffer)) != 0)
-			{
-				// Decode the data from the stream
-				string data = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+			// Start the server to listen to all incoming traffic
+			server = new TcpListener(IPAddress.Any, port);
+			server.Start();
 
-				// Store the data so we can give it when queried
-				// unreadMessages.Add(data);
-				lastMessage = data;
+			while (true)
+			{
+				// Listen for new clients
+				TcpClient client = await server.AcceptTcpClientAsync();
+				clients.Add(client);
+
+				// Handle packets
+				_ = HandleIncomingPackets(client);
+				_ = HandleOutgoingPackets(client);
 			}
 		}
-		catch (Exception e)
-		{
-			Console.WriteLine("client probably left idk (please close the window)\n" + e.Message);
-		}
-		finally
-		{
-			// Disconnect the client
-			remoteClient.Close();
-		}
-	}
 
-	public static async Task SendMessage(string message)
-	{
-		// If we're hosting then send data to the client,
-		// and if we're joining then send data to the server
-		TcpClient recipient = Hosting ? otherClient : client;
-
-		// Check for if the're available
-		if (recipient != null && recipient.Connected)
+		private static async Task HandleIncomingPackets(TcpClient client)
 		{
-			// Encode the string to bytes
+			// Get the current clients stream
+			NetworkStream stream = client.GetStream();
+
+			// Read the message to the buffer
+			byte[] buffer = new byte[1024];
+
+			while (true)
+			{
+				// Collect incoming data if we've been sent anything
+				int bytes = await stream.ReadAsync(buffer);
+				if (bytes == 0) break;
+
+				// Decode the bytes
+				string message = Encoding.UTF8.GetString(buffer, 0, bytes);
+				IncomingPackets.Enqueue(message);
+			}
+		}
+
+		private static async Task HandleOutgoingPackets(TcpClient client)
+		{
+			// Get the current clients stream
+			NetworkStream stream = client.GetStream();
+
+			while (true)
+			{
+				// Check for if any data is to be sent
+				if (outgoingPackets.TryDequeue(out string message))
+				{
+					// Check for what needs to happen to this packet
+					// Then afterwards remove the header
+					char headerType = message[0];
+					message = message.Split("§")[1];
+
+
+
+					// Serialise then send the packet
+					byte[] packet = Encoding.UTF8.GetBytes(message + "\n");
+					await stream.WriteAsync(packet);
+				}
+
+				// Take a little break to stop cpu burn idk
+				await Task.Delay(1);
+			}
+		}
+
+		public static void SendPacketTo(TcpClient client, string message)
+		{
+			// Encode the message for sending
 			byte[] data = Encoding.UTF8.GetBytes(message);
-			
-			// Send it
-			NetworkStream stream = recipient.GetStream();
-			await stream.WriteAsync(data);
+
+			_ = client.GetStream().WriteAsync(data);
+		}
+
+		public static void SendPacketToAllClients(string message)
+		{
+			// Encode the message for sending
+			byte[] data = Encoding.UTF8.GetBytes(message);
+
+			// Loop over all clients
+			foreach (TcpClient client in clients)
+			{
+				
+			}
 		}
 	}
 
-	// Get all messages
-	public static async Task<string> GetLastMessage()
+	public static class Client
 	{
-		return lastMessage;
-	}
+		private static TcpClient client;
+		private static NetworkStream stream;
 
-	//? Run this every time you 'use' a message that you received
-	public static void FlushLastMessage()
-	{
-		lastMessage = "WAS JUST FLUSHED";
+		public static async Task ConnectToServerAsync(string ip, int port)
+		{
+			// Create the client then connect to the server
+			client = new TcpClient();
+			await client.ConnectAsync(ip, port);
+
+			// Set up the stream we'll between the server
+			stream = client.GetStream();
+
+			// Send and receive packets between the server
+			_ = Task.Run(HandleIncomingPackets);
+			_ = Task.Run(HandleOutgoingPackets);
+		}
+
+		// Sending stuff
+		private static async Task HandleOutgoingPackets()
+		{
+			while (true)
+			{
+				// Check for if any data is to be sent
+				if (outgoingPackets.TryDequeue(out string message))
+				{
+					// Serialise then send the packet
+					byte[] packet = Encoding.UTF8.GetBytes(message + "\n");
+					await stream.WriteAsync(packet);
+				}
+
+				// Take a little break to stop cpu burn idk
+				await Task.Delay(1);
+			}
+		}
+
+		// Receiving stuff
+		private static async Task HandleIncomingPackets()
+		{
+			// Read the message to the buffer
+			byte[] buffer = new byte[1024];
+
+			while (true)
+			{
+				// Collect incoming data if we've been sent anything
+				int bytes = await stream.ReadAsync(buffer);
+				if (bytes == 0) break;
+
+				// Decode the bytes
+				string message = Encoding.UTF8.GetString(buffer, 0, bytes);
+				IncomingPackets.Enqueue(message);
+			}
+		}
+
+		public static void SendPacketToServer(string message)
+		{
+			// Add the server header then send the message
+			message = "s§" + message;
+			outgoingPackets.Enqueue(message);
+		}
+
+		public static void SendPacketToClient(TcpClient client, string message)
+		{
+			// Add the client header then send the message
+			// TODO: Parse/handle the packet
+			message = $"c<{client}>§" + message;
+			outgoingPackets.Enqueue(message);
+		}
+
+		public static void SendPacketToAllClients(string message)
+		{
+			// Add the all clients header then send the message
+			message = "a§" + message;
+			outgoingPackets.Enqueue(message);
+		}
+
+		public static void SendPacketToAllClientsExceptMyself(string message)
+		{
+			// Add the all but me header then send the message
+			message = "x§" + message;
+			outgoingPackets.Enqueue(message);	
+		}
 	}
 }

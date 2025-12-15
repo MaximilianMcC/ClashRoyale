@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using System.Net.Sockets;
+using System.Numerics;
 using Raylib_cs;
 
 class Program
@@ -6,7 +7,8 @@ class Program
 	public static async Task Main(string[] args)
 	{
 		// Set up networking
-		await Networker.Network(args);
+
+
 
 		// Set up raylib
 		Raylib.SetTraceLogLevel(TraceLogLevel.Warning);
@@ -16,8 +18,8 @@ class Program
 		Knight.Load();
 		Skeleton.Load();
 
-		Texture2D texture = AssetManager.LoadTexture("./assets/card-knight.png");
-		Card card = new Card(texture);
+		KnightCard knight = new KnightCard();
+		SkeletonCard skeleton = new SkeletonCard();
 
 		Emote laughingKing = new Emote("./assets/emotes/laughing-king.png", "./assets/emotes/laughing-king.wav", 355);
 
@@ -39,21 +41,24 @@ class Program
 				laughingKing.Play();
 			}
 
-			card.Update();
+			knight.Update();
+			// skeleton.Update();
 
 			Raylib.BeginDrawing();
 			Raylib.ClearBackground(Color.Green);
 			Raylib.DrawText($"{Raylib.GetFPS()}", 10, 10, 30, Color.White);
 			Arena.Render();
 			laughingKing.Render();
-			card.Render();
+			knight.Render();
+			// skeleton.Render();
 			Raylib.EndDrawing();
 		}
 
 		Knight.Unload();
 		Skeleton.Unload();
 
-		Raylib.UnloadTexture(texture);
+		knight.CleanUp();
+		skeleton.CleanUp();
 
 		AssetManager.UnloadEverything();
 		Raylib.CloseAudioDevice();
